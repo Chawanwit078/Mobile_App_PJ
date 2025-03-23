@@ -4,7 +4,7 @@
 
 dependencies:
   flutter:
-    sdk: flutter
+    dk: flutter
   iconly: ^1.0.1
   zoom_tap_animation: ^1.1.0
 
