@@ -10,7 +10,7 @@ dependencies:
 
 fonts:
 
-  - family: KoPub (สำหรับหัวข้อ AppBar ใช้ไซส์ 40)
+  - family: KoPub (สำหรับหัวข้อ AppBar)
     
     fonts:
     
