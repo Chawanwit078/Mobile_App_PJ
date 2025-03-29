@@ -23,4 +23,18 @@ fonts:
         weight: 300
         
       - asset: assets/fonts/KoPubBatang-Regular.ttf
+        
+  - family: Inter
+    
+      fonts:
+    
+        - asset: assets/fonts/Inter_18pt-Regular.ttf
+    
+        - asset: assets/fonts/Inter_18pt-SemiBold.ttf
+    
+          weight: 300
+    
+assets:
+
+    - assets/images/
 
