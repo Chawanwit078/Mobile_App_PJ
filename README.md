@@ -1,40 +1,16 @@
-# Mobile_App_PJ
-ไฟล์ PUBSPEC
-*เพิ่มล่าสุด*
+# pj_app
 
-dependencies:
+A new Flutter project.
 
-  iconly: ^1.0.1
-  
-  zoom_tap_animation: ^1.1.0
+## Getting Started
 
-fonts:
+This project is a starting point for a Flutter application.
 
-  - family: KoPub (สำหรับหัวข้อ AppBar)
-    
-    fonts:
-    
-      - asset: assets/fonts/KoPubBatang-Bold.ttf
-        
-        weight: 700
-        
-      - asset: assets/fonts/KoPubBatang-Light.ttf
-        
-        weight: 300
-        
-      - asset: assets/fonts/KoPubBatang-Regular.ttf
-        
-  - family: Inter
-    
-      fonts:
-    
-        - asset: assets/fonts/Inter_18pt-Regular.ttf
-    
-        - asset: assets/fonts/Inter_18pt-SemiBold.ttf
-    
-          weight: 300
-    
-assets:
+A few resources to get you started if this is your first Flutter project:
 
-    - assets/images/
+- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
+- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
 
+For help getting started with Flutter development, view the
+[online documentation](https://docs.flutter.dev/), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.
