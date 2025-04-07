@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'login.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../main.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -154,11 +155,16 @@ class _SignInPageState extends State<SignInPage> {
                       style: TextStyle(color: Colors.white)),
                   const SizedBox(width: 4),
                   GestureDetector(
-                    onTap: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (_) => LoginPage()),
-                      );
+                    onTap: () async {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.remove('user_id');
+
+                          // 🚨 ล้าง stack และเริ่มใหม่ที่ MyApp()
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(builder: (_) => MyApp()),
+                            (route) => false,
+                          );
                     },
                     child: Text("Login",
                         style: TextStyle(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'login.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../main.dart';
 
 class ProfilePage extends StatelessWidget {
   final Color background = const Color(0xFFF1E6D3);
@@ -60,10 +61,14 @@ class ProfilePage extends StatelessWidget {
                         ),
                       ),
                       GestureDetector(
-                        onTap: () {
+                        onTap: () async {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.remove('user_id');
+
+                          // 🚨 ล้าง stack และเริ่มใหม่ที่ MyApp()
                           Navigator.pushAndRemoveUntil(
                             context,
-                            MaterialPageRoute(builder: (_) => LoginPage()),
+                            MaterialPageRoute(builder: (_) => MyApp()),
                             (route) => false,
                           );
                         },

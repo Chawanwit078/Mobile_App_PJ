@@ -1,10 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'homepage.dart';
+import '../services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../main.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final Function(int userId) onLoginSuccess;
+
+  const LoginPage({super.key, required this.onLoginSuccess});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -14,34 +17,38 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  String _error = '';
 
   Future<void> _login() async {
-    final response = await http.post(
-      Uri.parse('http://<your-server-ip-or-domain>/login.php'), // เปลี่ยน URL ให้ตรงกับ API ของคุณ
-      body: {
-        'email': emailController.text,
-        'password': passwordController.text,
-      },
-    );
-
-    final result = jsonDecode(response.body);
-    if (result['status'] == 'success') {
-      // เข้าสู่ระบบสำเร็จ
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => HomePage()),
-        (route) => false,
+    final username = emailController.text.trim();
+    final password = passwordController.text.trim();
+     if (username.isEmpty || password.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text("Please Enter Username and Password"),
+        ),
       );
-    } else {
+      return;
+    }
+    final userId = await ApiService.login(username, password);
+
+    if (userId != null) {
+      // ✅ เก็บ user_id ใน SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('user_id', userId);
+
+      widget.onLoginSuccess(userId); // แจ้ง main.dart ว่า login สำเร็จ
+    }else {
       // ไม่สำเร็จ
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
           title: Text("Login Failed"),
-          content: Text(result['message']),
         ),
       );
     }
+
   }
 
   @override
