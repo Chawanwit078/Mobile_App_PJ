@@ -20,8 +20,8 @@ class _MyAppState extends State<MyApp> {
 
   final List<Widget> _pages = [
     HomePage(),
-    CalendarPage(),
-    AddPage(),
+    // CalendarPage(),
+    // AddPage(),
     WorkOut(),
     ProfilePage(),
   ];

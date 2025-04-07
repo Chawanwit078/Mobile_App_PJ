@@ -1,7 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'homepage.dart'; // ตรวจสอบ path ให้ถูกต้อง
-import 'sign_in.dart';
-import '/main.dart';
+import 'package:http/http.dart' as http;
+import 'homepage.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,11 +12,42 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  Future<void> _login() async {
+    final response = await http.post(
+      Uri.parse('http://<your-server-ip-or-domain>/login.php'), // เปลี่ยน URL ให้ตรงกับ API ของคุณ
+      body: {
+        'email': emailController.text,
+        'password': passwordController.text,
+      },
+    );
+
+    final result = jsonDecode(response.body);
+    if (result['status'] == 'success') {
+      // เข้าสู่ระบบสำเร็จ
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => HomePage()),
+        (route) => false,
+      );
+    } else {
+      // ไม่สำเร็จ
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text("Login Failed"),
+          content: Text(result['message']),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF2E3A1B), // สีเขียวเข้ม
+      backgroundColor: const Color(0xFF2E3A1B),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Center(
@@ -38,6 +69,7 @@ class _LoginPageState extends State<LoginPage> {
                 Text('Email', style: TextStyle(color: Colors.white)),
                 const SizedBox(height: 8),
                 TextField(
+                  controller: emailController,
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Color(0xFF3E4C2C),
@@ -54,6 +86,7 @@ class _LoginPageState extends State<LoginPage> {
                 Text('Password', style: TextStyle(color: Colors.white)),
                 const SizedBox(height: 8),
                 TextField(
+                  controller: passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     filled: true,
@@ -86,50 +119,16 @@ class _LoginPageState extends State<LoginPage> {
                   height: 48,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFF7C948), // สีเหลือง
+                      backgroundColor: Color(0xFFF7C948),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    onPressed: () {
-                      // เข้าสู่ระบบและกลับหน้าแรกแบบล้าง stack
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (_) => MyApp()),
-                        (route) => false,
-                      );
-                    },
+                    onPressed: _login,
                     child: Text(
                       'Login',
                       style: TextStyle(color: Color(0xFF3E3E3E)),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Don’t have an account ? ",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => SignInPage()),
-                          );
-                        },
-                        child: Text(
-                          "Sign Up",
-                          style: TextStyle(
-                            color: Color(0xFFF7C948),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      )
-                    ],
                   ),
                 ),
               ],
