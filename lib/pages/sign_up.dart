@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
+import '../services/api_service.dart';
 
-class SignInPage extends StatefulWidget {
-  const SignInPage({super.key});
+class SignUpPage extends StatefulWidget {
+  const SignUpPage({super.key});
 
   @override
-  State<SignInPage> createState() => _SignInPageState();
+  State<SignUpPage> createState() => _SignUpPageState();
 }
 
-class _SignInPageState extends State<SignInPage> {
+class _SignUpPageState extends State<SignUpPage> {
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
   String gender = 'Male';
   DateTime? selectedDate;
 
+  final TextEditingController firstNameController = TextEditingController();
+  final TextEditingController lastNameController = TextEditingController();
+  final TextEditingController usernameController = TextEditingController(); // เปลี่ยนตรงนี้
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
   final TextEditingController dobController = TextEditingController();
   final TextEditingController weightController = TextEditingController();
   final TextEditingController heightController = TextEditingController();
@@ -31,6 +37,39 @@ class _SignInPageState extends State<SignInPage> {
         selectedDate = picked;
         dobController.text = "${picked.day}/${picked.month}/${picked.year}";
       });
+    }
+  }
+
+  Future<void> _submitSignUp() async {
+    if (passwordController.text != confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Passwords do not match")),
+      );
+      return;
+    }
+
+    final userData = {
+      "firstName": firstNameController.text.trim(),
+      "lastName": lastNameController.text.trim(),
+      "username": usernameController.text.trim(), // 👈 ตรงนี้
+      "password": passwordController.text.trim(),
+      "dob": selectedDate?.toIso8601String().split("T")[0],
+      "gender": gender,
+      "weight": double.tryParse(weightController.text) ?? 0,
+      "height": double.tryParse(heightController.text) ?? 0,
+    };
+
+    final success = await ApiService.signUp(userData);
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Registration Successful")),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Registration Failed")),
+      );
     }
   }
 
@@ -54,14 +93,15 @@ class _SignInPageState extends State<SignInPage> {
               ),
             ),
             const SizedBox(height: 24),
-            _buildTextField(label: 'First Name'),
+            _buildTextField(label: 'First Name', controller: firstNameController),
             const SizedBox(height: 16),
-            _buildTextField(label: 'Last Name'),
+            _buildTextField(label: 'Last Name', controller: lastNameController),
             const SizedBox(height: 16),
-            _buildTextField(label: 'Email'),
+            _buildTextField(label: 'Username', controller: usernameController), // 👈
             const SizedBox(height: 16),
             _buildTextField(
               label: 'Password',
+              controller: passwordController,
               obscure: _obscurePassword,
               suffixIcon: IconButton(
                 icon: Icon(
@@ -78,6 +118,7 @@ class _SignInPageState extends State<SignInPage> {
             const SizedBox(height: 16),
             _buildTextField(
               label: 'Confirm Password',
+              controller: confirmPasswordController,
               obscure: _obscureConfirm,
               suffixIcon: IconButton(
                 icon: Icon(
@@ -113,11 +154,13 @@ class _SignInPageState extends State<SignInPage> {
             const SizedBox(height: 24),
             Text('Gender', style: TextStyle(color: Colors.white)),
             Row(
-              children: ['Male', 'Female', 'Non-binary'].map((value) {
+              children: ['Male', 'Female'].map((value) {
                 return Expanded(
                   child: RadioListTile(
-                    title: Text(value,
-                        style: TextStyle(color: Colors.white, fontSize: 14)),
+                    title: Text(
+                      value,
+                      style: TextStyle(color: Colors.white, fontSize: 14),
+                    ),
                     value: value,
                     groupValue: gender,
                     activeColor: Color(0xFFF7C948),
@@ -147,6 +190,24 @@ class _SignInPageState extends State<SignInPage> {
               ],
             ),
             const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFFF7C948),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onPressed: _submitSignUp,
+                child: Text(
+                  'Sign Up',
+                  style: TextStyle(color: Color(0xFF3E3E3E)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
             Center(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -156,15 +217,13 @@ class _SignInPageState extends State<SignInPage> {
                   const SizedBox(width: 4),
                   GestureDetector(
                     onTap: () async {
-                          final prefs = await SharedPreferences.getInstance();
-                          await prefs.remove('user_id');
-
-                          // 🚨 ล้าง stack และเริ่มใหม่ที่ MyApp()
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(builder: (_) => MyApp()),
-                            (route) => false,
-                          );
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.remove('user_id');
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => MyApp()),
+                        (route) => false,
+                      );
                     },
                     child: Text("Login",
                         style: TextStyle(
@@ -183,10 +242,12 @@ class _SignInPageState extends State<SignInPage> {
 
   Widget _buildTextField({
     required String label,
+    required TextEditingController controller,
     bool obscure = false,
     Widget? suffixIcon,
   }) {
     return TextField(
+      controller: controller,
       obscureText: obscure,
       style: TextStyle(color: Colors.white),
       decoration: InputDecoration(

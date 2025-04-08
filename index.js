@@ -98,51 +98,45 @@ app.get('/sport_detail/:id', (req, res) => {
   });
 });
 
+// ✅ Sign Up API
+app.post('/signup', (req, res) => {
+  const {
+    firstName,
+    lastName,
+    username,
+    password,
+    dob,
+    gender,
+    weight,
+    height,
+  } = req.body;
 
+  // 🔍 ตรวจ username ซ้ำก่อน
+  db.query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
+    if (err) return res.status(500).json({ success: false, message: 'DB error' });
+    if (results.length > 0) {
+      return res.status(409).json({ success: false, message: 'Username already exists' });
+    }
 
-// app.post('/quiz_result', (req, res) => {
-//   const { user_id, selected_type, selected_style } = req.body;
+    // ✅ ถ้าไม่ซ้ำ -> insert ได้เลย
+    const sql = `
+      INSERT INTO users (first_name, last_name, username, password, dob, gender, weight, height)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
 
-//   // Step 1: ลบผลเก่าของ user_id นี้ก่อน
-//   db.query(
-//     'DELETE FROM user_quiz_results WHERE user_id = ?',
-//     [user_id],
-//     (deleteErr, deleteResult) => {
-//       if (deleteErr) return res.status(500).send(deleteErr);
-
-//       // Step 2: Query กีฬาที่ตรงกับคำตอบ quiz ใหม่
-//       db.query(
-//         'SELECT id FROM sports WHERE type = ? AND style = ?',
-//         [selected_type, selected_style],
-//         (err, sportResults) => {
-//           if (err) return res.status(500).send(err);
-
-//           if (sportResults.length === 0) {
-//             return res.status(404).json({ message: 'ไม่พบกีฬาที่ตรงกับคำตอบ quiz' });
-//           }
-
-//           // Step 3: เตรียมข้อมูล insert
-//           const insertValues = sportResults.map((row) => [
-//             user_id,
-//             selected_type,
-//             selected_style,
-//             row.id
-//           ]);
-
-//           // Step 4: Insert ใหม่ทั้งหมด
-//           db.query(
-//             'INSERT INTO user_quiz_results (user_id, selected_type, selected_style, sport_id) VALUES ?',
-//             [insertValues],
-//             (insertErr, insertResult) => {
-//               if (insertErr) return res.status(500).send(insertErr);
-//               res.json({ success: true, inserted: insertResult.affectedRows });
-//             }
-//           );
-//         }
-//       );
-//     }
-//   );
-// });
+    db.query(
+      sql,
+      [firstName, lastName, username, password, dob, gender, weight, height],
+      (err2, result) => {
+        if (err2) {
+          console.error('Signup Error:', err2);
+          return res.status(500).json({ success: false, message: 'Signup failed' });
+        }
+        res.json({ success: true, userId: result.insertId });
+      }
+    );
+  });
+});
 
 
 app.listen(port, () => {
