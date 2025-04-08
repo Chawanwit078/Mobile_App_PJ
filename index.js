@@ -10,8 +10,8 @@ app.use(express.json());
 
 const db = mysql.createConnection({
   host: 'localhost',
-  user: 'Pattaraporn',
-  password: 'J66481311j', // 🔧 แก้ให้ตรงกับ MySQL ของคุณ
+  user: 'New2',
+  password: '1234', // 🔧 แก้ให้ตรงกับ MySQL ของคุณ
   database: 'sport_quiz_app' // 🔧 ต้องสร้าง DB ชื่อนี้ก่อนใน MySQL
 });
 
