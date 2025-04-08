@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = 'http://10.0.2.2:3000'; // หากใช้ emulator Android ใช้ 10.0.2.2
+  static const String baseUrl = 'http://10.0.2.2:3000';
 
   static Future<int?> login(String username, String password) async {
     final response = await http.post(
@@ -19,19 +19,30 @@ class ApiService {
     }
   }
 
-  // static Future<List<dynamic>> recommendSport(String type, String style) async {
-  //   final response = await http.post(
-  //     Uri.parse('$baseUrl/recommend'),
-  //     headers: {'Content-Type': 'application/json'},
-  //     body: jsonEncode({'type': type, 'style': style}),
-  //   );
+  static Future<List<dynamic>> getRecommendedSportsForUser(int userId) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/user_sport'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'user_id': userId}),
+    );
 
-  //   if (response.statusCode == 200) {
-  //     return jsonDecode(response.body);
-  //   } else {
-  //     throw Exception('Failed to load sports');
-  //   }
-  // }
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load recommended sports');
+    }
+  }
+
+  static Future<Map<String, dynamic>> getSportDetail(int sportId) async {
+  final response = await http.get(Uri.parse('$baseUrl/sport_detail/$sportId'));
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  } else {
+    throw Exception('Failed to load sport detail');
+  }
+}
+
 
   // static Future<bool> saveQuizResult(int userId, String type, String style, int sportId) async {
   //   final response = await http.post(
