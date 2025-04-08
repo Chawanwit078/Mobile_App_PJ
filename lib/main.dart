@@ -6,6 +6,7 @@ import 'pages/calendar.dart';
 import 'pages/add.dart';
 import 'pages/profile.dart';
 import 'pages/login.dart';
+import 'pages/sign_up.dart';
 import 'nav.dart';
 
 void main() {
@@ -66,19 +67,23 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: _isLoggedIn
-          ? Scaffold(
-              body: IndexedStack(
-                index: _selectedIndex,
-                children: _pages,
-              ),
-              bottomNavigationBar: BottomBar(
-                currentIndex: _selectedIndex,
-                onTap: _onItemTapped,
-              ),
-            )
-          : LoginPage(onLoginSuccess: _handleLoginSuccess),
-    );
+  debugShowCheckedModeBanner: false,
+  routes: {
+    '/signup': (context) => SignUpPage(),
+  },
+  home: _isLoggedIn
+      ? Scaffold(
+          body: IndexedStack(
+            index: _selectedIndex,
+            children: _pages,
+          ),
+          bottomNavigationBar: BottomBar(
+            currentIndex: _selectedIndex,
+            onTap: _onItemTapped,
+          ),
+        )
+      : LoginPage(onLoginSuccess: _handleLoginSuccess),
+);
+
   }
 }

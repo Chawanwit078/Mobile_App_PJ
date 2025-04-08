@@ -15,32 +15,30 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
-  final TextEditingController emailController = TextEditingController();
+  final TextEditingController usernameController = TextEditingController(); // 👈 เปลี่ยนชื่อ controller
   final TextEditingController passwordController = TextEditingController();
-  String _error = '';
 
   Future<void> _login() async {
-    final username = emailController.text.trim();
+    final username = usernameController.text.trim(); // 👈 ใช้ username
     final password = passwordController.text.trim();
-     if (username.isEmpty || password.isEmpty) {
+
+    if (username.isEmpty || password.isEmpty) {
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
-          title: Text("Please Enter Username and Password"),
+          title: Text("Please enter Username and Password"),
         ),
       );
       return;
     }
+
     final userId = await ApiService.login(username, password);
 
     if (userId != null) {
-      // ✅ เก็บ user_id ใน SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('user_id', userId);
-
-      widget.onLoginSuccess(userId); // แจ้ง main.dart ว่า login สำเร็จ
-    }else {
-      // ไม่สำเร็จ
+      widget.onLoginSuccess(userId);
+    } else {
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
@@ -48,7 +46,6 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
     }
-
   }
 
   @override
@@ -73,14 +70,14 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                Text('Email', style: TextStyle(color: Colors.white)),
+                Text('Username', style: TextStyle(color: Colors.white)), // 👈 เปลี่ยน label
                 const SizedBox(height: 8),
                 TextField(
-                  controller: emailController,
+                  controller: usernameController, // 👈 ใช้ usernameController
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Color(0xFF3E4C2C),
-                    hintText: 'example@gmail.com',
+                    hintText: 'Username', // 👈 เปลี่ยน hint
                     hintStyle: TextStyle(color: Colors.white70),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -102,9 +99,7 @@ class _LoginPageState extends State<LoginPage> {
                     hintStyle: TextStyle(color: Colors.white70),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
+                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
                         color: Colors.white70,
                       ),
                       onPressed: () {
@@ -136,6 +131,30 @@ class _LoginPageState extends State<LoginPage> {
                       'Login',
                       style: TextStyle(color: Color(0xFF3E3E3E)),
                     ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Don’t have an account ? ",
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/signup');
+                        },
+                        child: Text(
+                          'Sign Up',
+                          style: TextStyle(
+                            color: Color(0xFFF7C948),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
