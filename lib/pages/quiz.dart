@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/api_service.dart';
+import 'workout.dart';
 
 class QuizPage extends StatefulWidget {
   @override
@@ -60,9 +63,27 @@ class _QuizPageState extends State<QuizPage> {
             Spacer(),
             Center(
               child: ElevatedButton(
-                onPressed: () {
-                  print("Selected options: $selectedOptions");
-                  Navigator.pop(context);
+                onPressed: () async {
+                  final typeAnswer = selectedOptions["What type of activity do you prefer?"];
+                  final styleAnswer = selectedOptions["Do you prefer indoor or outdoor activities?"];
+
+                  if (typeAnswer != null && styleAnswer != null) {
+                    final prefs = await SharedPreferences.getInstance();
+                    final userId = prefs.getInt('user_id');
+
+                    if (userId != null) {
+                      try {
+                        await ApiService.saveUserQuizAnswers(userId, typeAnswer, styleAnswer);
+
+                        // ✅ กลับไปหน้าเดิมที่มี navbar อยู่
+                        Navigator.pop(context, 'success');
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to save')),
+                        );
+                      }
+                    }
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF7A8253),

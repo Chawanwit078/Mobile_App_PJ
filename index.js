@@ -43,7 +43,6 @@ app.post('/login', (req, res) => {
 // GET กีฬาที่แนะนำตาม user_id
 app.post('/user_sport', (req, res) => {
   const { user_id } = req.body;
-  console.log('เรียก /user_sport สำหรับ user_id:', user_id);
   // ดึงจาก user_quiz_results
   db.query(
     'SELECT s.* FROM sports s ' +
@@ -137,6 +136,65 @@ app.post('/signup', (req, res) => {
     );
   });
 });
+
+app.get('/user_detail/:id', (req, res) => {
+  const user_id = req.params.id;
+
+  const userQuery = 'SELECT * FROM users WHERE id = ?';
+
+  db.query(userQuery, [user_id], (err, result) => {
+    if (err) return res.status(500).send(err);
+
+    if (result.length > 0) {
+      res.json(result[0]);
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  });
+});
+
+
+app.post('/save_quiz', (req, res) => {
+  console.log("อยู่ใน /save_quiz")
+
+
+  const { user_id, selected_type, selected_style } = req.body;
+  console.log("👉 type:", selected_type);
+  console.log("👉 style:", selected_style);
+
+
+  const sportQuery = 'SELECT id FROM sports WHERE type = ? AND style = ?';
+  db.query(sportQuery, [selected_style, selected_type], (err, results) => {
+    if (err) {
+      console.error("❌ Search Error: ", err);
+      return res.status(500).send(err);
+    }
+
+    const insertValues = results.map(r => [user_id, selected_type, selected_style, r.id]);
+    console.log("📤 insertValues:", insertValues);
+    console.log("📥 type:", typeof insertValues);
+    if (insertValues.length === 0) return res.status(404).send('No sports matched');
+
+    const insertQuery = `
+      INSERT INTO user_quiz_results (user_id, selected_type, selected_style, sport_id)
+      VALUES ?
+      ON DUPLICATE KEY UPDATE
+        selected_type = VALUES(selected_type),
+        selected_style = VALUES(selected_style),
+        sport_id = VALUES(sport_id)
+    `;
+
+    db.query(insertQuery, [insertValues], (err2) => {
+      if (err2) {
+        console.error("❌ Insert Error: ", err2);
+        return res.status(500).send(err2);
+      }
+      res.send('Quiz answers saved');
+    });    
+  });
+});
+
+
 
 
 app.listen(port, () => {

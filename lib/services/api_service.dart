@@ -23,16 +23,24 @@ class ApiService {
 
   // 🧠 Quiz Result
   static Future<List<dynamic>> getRecommendedSportsForUser(int userId) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/user_sport'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'user_id': userId}),
-    );
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/user_sport'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'user_id': userId}),
+          )
+          .timeout(const Duration(seconds: 5)); // ✅ เพิ่ม timeout
 
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Failed to load recommended sports');
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print("⚠️ getRecommendedSportsForUser: Bad status ${response.statusCode}");
+        return [];
+      }
+    } catch (e) {
+      print("❌ getRecommendedSportsForUser Error: $e");
+      return []; // ป้องกันแอพ crash
     }
   }
 
@@ -64,4 +72,33 @@ class ApiService {
       return false;
     }
   }
+
+  static Future<Map<String, dynamic>> getUserDetail(int userId) async {
+    final response = await http
+        .get(Uri.parse('$baseUrl/user_detail/$userId'))
+        .timeout(const Duration(seconds: 5)); // ✅ timeout กันค้าง
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load user detail');
+    }
+  }
+
+  static Future<void> saveUserQuizAnswers(int userId, String type, String style) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/save_quiz'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'user_id': userId,
+        'selected_type': type,
+        'selected_style': style,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to save quiz answers');
+    }
+  }
+
 }

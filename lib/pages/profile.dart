@@ -1,16 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
+import '../services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
   final Color background = const Color(0xFFF1E6D3);
+
   final Color darkGreen = const Color(0xFF37421B);
+
   final Color cardGreen = const Color(0xFF9BA88D);
 
-  final String name = "NOKKIWI";
-  final String dob = "6 June 2005";
-  final int height = 171;
-  final int weight = 60;
+  bool isLoading = true;
+  String name = "";
+  String dob = "";
+  int height = 0;
+  int weight = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserDetail();
+  }
+
+  Future<void> fetchUserDetail() async {
+  final prefs = await SharedPreferences.getInstance();
+  final userId = prefs.getInt('user_id');
+
+  if (userId != null) {
+    try {
+      final user = await ApiService.getUserDetail(userId);
+
+      setState(() {
+        name = user['username'] ?? '';
+        dob = (user['dob'] ?? '').toString().split('T').first; // ตัดเวลาออก (ถ้ามี)
+
+        // ✅ แปลงจาก dynamic เป็น int ป้องกัน NaN
+        height = (user['height'] ?? 0).toDouble().round();
+        weight = (user['weight'] ?? 0).toDouble().round();
+
+        isLoading = false;
+      });
+    } catch (e) {
+      print("Error fetching user: $e");
+      setState(() => isLoading = false);
+    }
+  }
+}
+
 
   double calculateBMI(int weight, int height) {
     double heightInM = height / 100;
