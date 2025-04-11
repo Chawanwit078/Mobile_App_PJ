@@ -1,14 +1,13 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    id("dev.flutter.flutter-gradle-plugin") // ต้องอยู่ล่างสุดตาม Flutter ระบุ
+    id("dev.flutter.flutter-gradle-plugin") // ต้องอยู่ล่างสุด
 }
 
 android {
     namespace = "com.example.pj_app"
-    compileSdk = 35 // ✅ ระบุ compileSdk ตรงนี้แบบชัดเจน
-
-    ndkVersion = "23.1.7779620" // ✅ ระบุ ndkVersion ชัดเจนหรือใช้ของ flutter ถ้ารองรับ
+    compileSdk = 35
+    ndkVersion = "23.1.7779620"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -16,12 +15,12 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = "11"
     }
 
     defaultConfig {
         applicationId = "com.example.pj_app"
-        minSdk = 21 // ✅ แนะนำให้ใช้เลขตรงไปเลยแทน flutter.minSdkVersion
+        minSdk = 26 // ✅ สำคัญมากสำหรับ ACTIVITY_RECOGNITION
         targetSdk = 33
         versionCode = 1
         versionName = "1.0"
