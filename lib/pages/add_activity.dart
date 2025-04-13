@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
+import '../db/database_helper.dart';
 
 class AddActivityPage extends StatefulWidget {
-  const AddActivityPage({super.key});
+  final int userId; // ✅ รับ userId จากหน้าที่เรียกใช้
+
+  const AddActivityPage({super.key, required this.userId});
 
   @override
   State<AddActivityPage> createState() => _AddActivityPageState();
@@ -33,45 +34,6 @@ class _AddActivityPageState extends State<AddActivityPage> {
   int selectedMinute = 1;
   DateTime today = DateTime.now();
 
-  late Database database;
-
-  @override
-  void initState() {
-    super.initState();
-    initDatabase();
-  }
-
-  Future<void> initDatabase() async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'activities.db');
-    database = await openDatabase(
-      path,
-      version: 1,
-      onCreate: (db, version) async {
-        await db.execute('''
-          CREATE TABLE activities (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            duration TEXT,
-            date TEXT
-          )
-        ''');
-      },
-    );
-  }
-
-  Future<void> insertActivity(String name, String duration, String date) async {
-    await database.insert(
-      'activities',
-      {
-        'name': name,
-        'duration': duration,
-        'date': date,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -80,7 +42,7 @@ class _AddActivityPageState extends State<AddActivityPage> {
         backgroundColor: darkGreen,
         elevation: 0,
         title: const Text("Add Activities", style: TextStyle(color: Colors.white)),
-        leading: BackButton(color: Colors.white),
+        leading: const BackButton(color: Colors.white),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -126,8 +88,6 @@ class _AddActivityPageState extends State<AddActivityPage> {
               ],
             ),
             const SizedBox(height: 24),
-
-            /// 👇 Duration
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -145,10 +105,7 @@ class _AddActivityPageState extends State<AddActivityPage> {
                 ),
               ],
             ),
-
             const SizedBox(height: 24),
-
-            /// 👇 Date
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -160,8 +117,6 @@ class _AddActivityPageState extends State<AddActivityPage> {
               ],
             ),
             const Spacer(),
-
-            /// 👇 Add button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -176,7 +131,12 @@ class _AddActivityPageState extends State<AddActivityPage> {
                   if (selectedSport != null) {
                     final duration = '${selectedHour}h ${selectedMinute}min';
                     final date = DateFormat('yyyy-MM-dd').format(today);
-                    await insertActivity(selectedSport!, duration, date);
+                    await DatabaseHelper.instance.insertActivity(
+                      widget.userId, // ✅ ส่ง userId เข้าไป
+                      selectedSport!,
+                      duration,
+                      date,
+                    );
                     Navigator.pop(context);
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(

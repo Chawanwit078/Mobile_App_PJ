@@ -15,17 +15,17 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
-  final TextEditingController usernameController = TextEditingController(); // 👈 เปลี่ยนชื่อ controller
+  final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
   Future<void> _login() async {
-    final username = usernameController.text.trim(); // 👈 ใช้ username
+    final username = usernameController.text.trim();
     final password = passwordController.text.trim();
 
     if (username.isEmpty || password.isEmpty) {
       showDialog(
         context: context,
-        builder: (_) => AlertDialog(
+        builder: (_) => const AlertDialog(
           title: Text("Please enter Username and Password"),
         ),
       );
@@ -36,12 +36,12 @@ class _LoginPageState extends State<LoginPage> {
 
     if (userId != null) {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt('user_id', userId);
+      await prefs.setInt('userId', userId); // ✅ ตรงกับ key ที่ใช้ในแอป
       widget.onLoginSuccess(userId);
     } else {
       showDialog(
         context: context,
-        builder: (_) => AlertDialog(
+        builder: (_) => const AlertDialog(
           title: Text("Login Failed"),
         ),
       );
@@ -59,7 +59,7 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(
+                const Center(
                   child: Text(
                     'Hi, Ready to work out?',
                     style: TextStyle(
@@ -70,33 +70,33 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                Text('Username', style: TextStyle(color: Colors.white)), // 👈 เปลี่ยน label
+                const Text('Username', style: TextStyle(color: Colors.white)),
                 const SizedBox(height: 8),
                 TextField(
-                  controller: usernameController, // 👈 ใช้ usernameController
+                  controller: usernameController,
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: Color(0xFF3E4C2C),
-                    hintText: 'Username', // 👈 เปลี่ยน hint
-                    hintStyle: TextStyle(color: Colors.white70),
+                    fillColor: const Color(0xFF3E4C2C),
+                    hintText: 'Username',
+                    hintStyle: const TextStyle(color: Colors.white70),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.white),
+                      borderSide: const BorderSide(color: Colors.white),
                     ),
                   ),
-                  style: TextStyle(color: Colors.white),
+                  style: const TextStyle(color: Colors.white),
                 ),
                 const SizedBox(height: 16),
-                Text('Password', style: TextStyle(color: Colors.white)),
+                const Text('Password', style: TextStyle(color: Colors.white)),
                 const SizedBox(height: 8),
                 TextField(
                   controller: passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: Color(0xFF3E4C2C),
+                    fillColor: const Color(0xFF3E4C2C),
                     hintText: 'Enter Your Password',
-                    hintStyle: TextStyle(color: Colors.white70),
+                    hintStyle: const TextStyle(color: Colors.white70),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword ? Icons.visibility_off : Icons.visibility,
@@ -110,10 +110,10 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.white),
+                      borderSide: const BorderSide(color: Colors.white),
                     ),
                   ),
-                  style: TextStyle(color: Colors.white),
+                  style: const TextStyle(color: Colors.white),
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
@@ -121,13 +121,13 @@ class _LoginPageState extends State<LoginPage> {
                   height: 48,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFF7C948),
+                      backgroundColor: const Color(0xFFF7C948),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                     onPressed: _login,
-                    child: Text(
+                    child: const Text(
                       'Login',
                       style: TextStyle(color: Color(0xFF3E3E3E)),
                     ),
@@ -138,7 +138,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
+                      const Text(
                         "Don’t have an account ? ",
                         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
@@ -146,7 +146,7 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: () {
                           Navigator.pushNamed(context, '/signup');
                         },
-                        child: Text(
+                        child: const Text(
                           'Sign Up',
                           style: TextStyle(
                             color: Color(0xFFF7C948),

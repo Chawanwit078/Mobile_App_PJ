@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart' as p;
+import 'package:project_demo/db/database_helper.dart';
 
 class EditActivityPage extends StatefulWidget {
   final Map<String, dynamic> activity;
+  final int userId;
 
-  const EditActivityPage({super.key, required this.activity});
+  const EditActivityPage({super.key, required this.activity, required this.userId});
 
   @override
   State<EditActivityPage> createState() => _EditActivityPageState();
@@ -35,23 +35,15 @@ class _EditActivityPageState extends State<EditActivityPage> {
   int selectedHour = 0;
   int selectedMinute = 0;
   DateTime today = DateTime.now();
-  late Database database;
 
   @override
   void initState() {
     super.initState();
-    initDatabase();
     selectedSport = widget.activity['name'];
     final durationParts = widget.activity['duration'].split(' ');
     selectedHour = int.tryParse(durationParts[0].replaceAll('h', '')) ?? 0;
     selectedMinute = int.tryParse(durationParts[1].replaceAll('min', '')) ?? 0;
     today = DateTime.tryParse(widget.activity['date']) ?? DateTime.now();
-  }
-
-  Future<void> initDatabase() async {
-    final dbPath = await getDatabasesPath();
-    final path = p.join(dbPath, 'activities.db');
-    database = await openDatabase(path);
   }
 
   Future<void> updateActivity() async {
@@ -60,21 +52,17 @@ class _EditActivityPageState extends State<EditActivityPage> {
       'duration': '${selectedHour}h ${selectedMinute}min',
       'date': DateFormat('yyyy-MM-dd').format(today),
     };
-    await database.update(
-      'activities',
+
+    await DatabaseHelper.instance.updateActivity(
+      widget.activity['id'],
       updatedData,
-      where: 'id = ?',
-      whereArgs: [widget.activity['id']],
     );
+
     Navigator.pop(context);
   }
 
   Future<void> deleteActivity() async {
-    await database.delete(
-      'activities',
-      where: 'id = ?',
-      whereArgs: [widget.activity['id']],
-    );
+    await DatabaseHelper.instance.deleteActivity(widget.activity['id']);
     Navigator.pop(context);
   }
 
@@ -100,8 +88,6 @@ class _EditActivityPageState extends State<EditActivityPage> {
               ],
             ),
             const SizedBox(height: 24),
-
-            /// Duration row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -116,8 +102,6 @@ class _EditActivityPageState extends State<EditActivityPage> {
               ],
             ),
             const SizedBox(height: 24),
-
-            /// Date row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -129,8 +113,6 @@ class _EditActivityPageState extends State<EditActivityPage> {
               ],
             ),
             const Spacer(),
-
-            /// Buttons
             Column(
               children: [
                 SizedBox(

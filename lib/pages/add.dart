@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
 import 'package:intl/intl.dart';
-import 'package:path/path.dart' as p;
 import 'package:pedometer/pedometer.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:project_demo/db/database_helper.dart';
 
 import 'add_activity.dart';
 import 'edit_activity.dart';
@@ -25,6 +25,7 @@ class _AddPageState extends State<AddPage> {
   int waterGoal = 8;
 
   List<Map<String, dynamic>> todayActivities = [];
+  int userId = 0;
 
   final Color darkGreen = const Color(0xFF37421B);
   final Color yellow = const Color(0xFFF7C948);
@@ -44,8 +45,15 @@ class _AddPageState extends State<AddPage> {
   @override
   void initState() {
     super.initState();
+    _loadUserId();
+  }
+
+  Future<void> _loadUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    userId = prefs.getInt('userId') ?? 0;
     _initPedometer();
-    fetchTodayActivities();
+    _loadSummary();
+    _loadActivities();
   }
 
   void _initPedometer() {
@@ -57,23 +65,28 @@ class _AddPageState extends State<AddPage> {
       setState(() {
         stepCount = event.steps - (initialSteps ?? 0);
       });
+      _saveSummary();
     }).onError((error) {
       debugPrint("Pedometer Error: $error");
     });
   }
 
-  Future<void> fetchTodayActivities() async {
-    final dbPath = await getDatabasesPath();
-    final db = await openDatabase(p.join(dbPath, 'activities.db'));
+  Future<void> _loadSummary() async {
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final summary = await DatabaseHelper.instance.getDailySummaryByDate(userId, today);
+    setState(() {
+      stepCount = summary['steps'] ?? 0;
+      waterCups = summary['water'] ?? 0;
+    });
+  }
 
-    todayActivities = await db.query(
-      'activities',
-      where: 'date = ?',
-      whereArgs: [today],
-      orderBy: 'id DESC',
-    );
+  Future<void> _saveSummary() async {
+    await DatabaseHelper.instance.saveDailySummary(userId, stepCount, waterCups);
+  }
 
+  Future<void> _loadActivities() async {
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    todayActivities = await DatabaseHelper.instance.getActivitiesByDate(userId, today);
     setState(() {});
   }
 
@@ -121,9 +134,11 @@ class _AddPageState extends State<AddPage> {
               onTap: () async {
                 await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => EditActivityPage(activity: activity)),
+                  MaterialPageRoute(
+                    builder: (_) => EditActivityPage(activity: activity, userId: userId), // ✅ ส่ง userId
+                  ),
                 );
-                fetchTodayActivities();
+                _loadActivities();
               },
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 12),
@@ -155,9 +170,9 @@ class _AddPageState extends State<AddPage> {
             onTap: () async {
               await Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const AddActivityPage()),
+                MaterialPageRoute(builder: (_) => AddActivityPage(userId: userId)), // ✅ ส่ง userId
               );
-              fetchTodayActivities();
+              _loadActivities();
             },
             child: Container(
               height: 40,
@@ -175,52 +190,15 @@ class _AddPageState extends State<AddPage> {
 
   Widget _buildStepCard() {
     double percent = stepCount / stepGoal;
-    return AspectRatio(
-      aspectRatio: 3 / 4,
-      child: Container(
-        decoration: BoxDecoration(color: darkGreen, borderRadius: BorderRadius.circular(16)),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TweenAnimationBuilder(
-              tween: Tween<double>(begin: 0, end: percent.clamp(0, 1)),
-              duration: const Duration(milliseconds: 300),
-              builder: (context, value, child) {
-                return Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SizedBox(
-                      height: 100,
-                      width: 100,
-                      child: CircularProgressIndicator(
-                        value: value,
-                        strokeWidth: 8,
-                        backgroundColor: Colors.grey[300],
-                        valueColor: AlwaysStoppedAnimation(yellow),
-                      ),
-                    ),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(IconlyLight.activity, size: 24, color: Colors.white),
-                        Text("$stepCount", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                        Text("/$stepGoal", style: const TextStyle(fontSize: 12, color: Colors.white)),
-                      ],
-                    ),
-                  ],
-                );
-              },
-            ),
-            const SizedBox(height: 8),
-            Text("Step", style: TextStyle(color: Colors.white)),
-          ],
-        ),
-      ),
-    );
+    return _buildCircularCard("Step", stepCount, stepGoal, yellow, Icons.directions_walk);
   }
 
   Widget _buildWaterCard() {
-    double percent = waterCups / waterGoal;
+    return _buildCircularCard("Water", waterCups, waterGoal, yellow, Icons.local_drink_outlined, isWater: true);
+  }
+
+  Widget _buildCircularCard(String label, int value, int goal, Color color, IconData icon, {bool isWater = false}) {
+    double percent = (value / goal).clamp(0, 1);
     return AspectRatio(
       aspectRatio: 3 / 4,
       child: Container(
@@ -229,9 +207,9 @@ class _AddPageState extends State<AddPage> {
         child: Column(
           children: [
             TweenAnimationBuilder(
-              tween: Tween<double>(begin: 0, end: percent.clamp(0, 1)),
+              tween: Tween<double>(begin: 0, end: percent),
               duration: const Duration(milliseconds: 300),
-              builder: (context, value, child) {
+              builder: (context, valueAnim, child) {
                 return Stack(
                   alignment: Alignment.center,
                   children: [
@@ -239,18 +217,18 @@ class _AddPageState extends State<AddPage> {
                       height: 100,
                       width: 100,
                       child: CircularProgressIndicator(
-                        value: value,
+                        value: valueAnim,
                         strokeWidth: 8,
                         backgroundColor: Colors.grey[300],
-                        valueColor: AlwaysStoppedAnimation(yellow),
+                        valueColor: AlwaysStoppedAnimation(color),
                       ),
                     ),
                     Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.local_drink_outlined, size: 24, color: Colors.white),
-                        Text("$waterCups", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                        const Text("/ 8 cups", style: TextStyle(fontSize: 12, color: Colors.white)),
+                        Icon(icon, size: 24, color: Colors.white),
+                        Text("$value", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                        Text("/ $goal", style: const TextStyle(fontSize: 12, color: Colors.white)),
                       ],
                     ),
                   ],
@@ -258,21 +236,31 @@ class _AddPageState extends State<AddPage> {
               },
             ),
             const SizedBox(height: 8),
-            Text("Water", style: TextStyle(color: Colors.white)),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.remove, color: Colors.white),
-                  onPressed: () => setState(() => waterCups = (waterCups > 0) ? waterCups - 1 : 0),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add, color: Colors.white),
-                  onPressed: () => setState(() => waterCups = (waterCups < waterGoal) ? waterCups + 1 : waterCups),
-                ),
-              ],
-            ),
+            Text(label, style: const TextStyle(color: Colors.white)),
+            if (isWater)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove, color: Colors.white),
+                    onPressed: () {
+                      setState(() {
+                        if (waterCups > 0) waterCups--;
+                      });
+                      _saveSummary();
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add, color: Colors.white),
+                    onPressed: () {
+                      setState(() {
+                        if (waterCups < waterGoal) waterCups++;
+                      });
+                      _saveSummary();
+                    },
+                  ),
+                ],
+              ),
           ],
         ),
       ),
