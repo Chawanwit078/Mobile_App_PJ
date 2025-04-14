@@ -39,8 +39,9 @@ class _QuizPageState extends State<QuizPage> {
         ),
         centerTitle: true,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 20),
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -60,7 +61,7 @@ class _QuizPageState extends State<QuizPage> {
               "Do you like high-intensity workouts?",
               ["Yes", "No", "Sometimes"],
             ),
-            Spacer(),
+            const SizedBox(height: 30),
             Center(
               child: ElevatedButton(
                 onPressed: () async {
@@ -74,12 +75,10 @@ class _QuizPageState extends State<QuizPage> {
                     if (userId != null) {
                       try {
                         await ApiService.saveUserQuizAnswers(userId, typeAnswer, styleAnswer);
-
-                        // ✅ กลับไปหน้าเดิมที่มี navbar อยู่
                         Navigator.pop(context, 'success');
                       } catch (e) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Failed to save')),
+                          const SnackBar(content: Text('Failed to save')),
                         );
                       }
                     }
@@ -87,12 +86,12 @@ class _QuizPageState extends State<QuizPage> {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF7A8253),
-                  padding: EdgeInsets.symmetric(horizontal: 80, vertical: 15),
+                  padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
                 ),
-                child: Text(
+                child: const Text(
                   "SAVE",
                   style: TextStyle(
                     fontFamily: "Inter",
@@ -103,7 +102,7 @@ class _QuizPageState extends State<QuizPage> {
                 ),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 30),
           ],
         ),
       ),

@@ -186,37 +186,41 @@ class Quiz extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "Not sure which sport suits you?",
-                  style: TextStyle(
-                    fontFamily: "Inter",
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                    color: Color(0xFF354024),
+            Expanded( // ✅ ให้ Column ยืดหยุ่นตามพื้นที่
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Text(
+                    "Not sure which sport suits you?",
+                    style: TextStyle(
+                      fontFamily: "Inter",
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: Color(0xFF354024),
+                    ),
                   ),
-                ),
-                Text(
-                  'Take the quiz!',
-                  style: TextStyle(
-                    fontFamily: "Inter",
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                    color: Color(0xFF354024),
-                  ),
-                )
-              ],
+                  Text(
+                    'Take the quiz!',
+                    style: TextStyle(
+                      fontFamily: "Inter",
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      color: Color(0xFF354024),
+                    ),
+                  )
+                ],
+              ),
             ),
+            const SizedBox(width: 10), // ✅ เพิ่มช่องว่างเล็กน้อย
             const Icon(
               IconlyBold.document,
-              size: 50,
+              size: 36, // ✅ ขนาดที่ไม่ใหญ่เกินไป
               color: Color(0xFF354024),
             ),
           ],
         ),
+
       ),
     );
   }

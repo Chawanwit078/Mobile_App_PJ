@@ -162,11 +162,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   radius: 45,
                   backgroundColor: cardGreen,
                 ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Icon(Icons.edit, size: 20, color: darkGreen),
-                )
+                
               ],
             ),
             const SizedBox(height: 8),
