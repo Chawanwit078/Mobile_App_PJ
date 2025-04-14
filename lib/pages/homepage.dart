@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:fl_chart/fl_chart.dart';
+import 'package:fl_chart/fl_chart.dart' as fl_chart;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../db/database_helper.dart';
 
@@ -19,9 +19,9 @@ class _HomePageState extends State<HomePage> {
 
   int userId = 0;
   int currentStreak = 0;
-  List<BarChartGroupData> durationBars = [];
-  List<BarChartGroupData> stepBars = [];
-  List<BarChartGroupData> waterBars = [];
+  List<fl_chart.BarChartGroupData> durationBars = [];
+  List<fl_chart.BarChartGroupData> stepBars = [];
+  List<fl_chart.BarChartGroupData> waterBars = [];
 
   @override
   void initState() {
@@ -43,7 +43,8 @@ class _HomePageState extends State<HomePage> {
       [userId],
     );
 
-    List<DateTime> dates = result.map((e) => DateTime.parse(e['date'] as String)).toList();
+    List<DateTime> dates =
+        result.map((e) => DateTime.parse(e['date'] as String)).toList();
     int streak = 0;
     DateTime today = DateTime.now();
 
@@ -62,18 +63,26 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadChartData() async {
     final now = DateTime.now();
-    final last7Days = List.generate(7, (i) => now.subtract(Duration(days: 6 - i)));
+    final last7Days = List.generate(
+      7,
+      (i) => now.subtract(Duration(days: 6 - i)),
+    );
 
-    List<BarChartGroupData> durationData = [];
-    List<BarChartGroupData> stepData = [];
-    List<BarChartGroupData> waterData = [];
+    List<fl_chart.BarChartGroupData> durationData = [];
+    List<fl_chart.BarChartGroupData> stepData = [];
+    List<fl_chart.BarChartGroupData> waterData = [];
 
     for (int i = 0; i < last7Days.length; i++) {
       final date = DateFormat('yyyy-MM-dd').format(last7Days[i]);
-      final activityList = await DatabaseHelper.instance.getActivitiesByDate(userId, date);
-      final summary = await DatabaseHelper.instance.getDailySummaryByDate(userId, date);
+      final activityList = await DatabaseHelper.instance.getActivitiesByDate(
+        userId,
+        date,
+      );
+      final summary = await DatabaseHelper.instance.getDailySummaryByDate(
+        userId,
+        date,
+      );
 
-      // รวมเวลาในหน่วยนาที
       int totalMinutes = 0;
       for (var a in activityList) {
         final parts = a['duration'].toString().split(RegExp(r'h|min'));
@@ -82,17 +91,44 @@ class _HomePageState extends State<HomePage> {
         totalMinutes += h * 60 + m;
       }
 
-      durationData.add(BarChartGroupData(x: i, barRods: [
-        BarChartRodData(toY: totalMinutes.toDouble(), color: yellow, width: 14),
-      ]));
+      durationData.add(
+        fl_chart.BarChartGroupData(
+          x: i,
+          barRods: [
+            fl_chart.BarChartRodData(
+              toY: totalMinutes.toDouble(),
+              color: yellow,
+              width: 14,
+            ),
+          ],
+        ),
+      );
 
-      stepData.add(BarChartGroupData(x: i, barRods: [
-        BarChartRodData(toY: (summary['steps'] ?? 0).toDouble(), color: yellow, width: 14),
-      ]));
+      stepData.add(
+        fl_chart.BarChartGroupData(
+          x: i,
+          barRods: [
+            fl_chart.BarChartRodData(
+              toY: (summary['steps'] ?? 0).toDouble(),
+              color: yellow,
+              width: 14,
+            ),
+          ],
+        ),
+      );
 
-      waterData.add(BarChartGroupData(x: i, barRods: [
-        BarChartRodData(toY: (summary['water'] ?? 0).toDouble(), color: yellow, width: 14),
-      ]));
+      waterData.add(
+        fl_chart.BarChartGroupData(
+          x: i,
+          barRods: [
+            fl_chart.BarChartRodData(
+              toY: (summary['water'] ?? 0).toDouble(),
+              color: yellow,
+              width: 14,
+            ),
+          ],
+        ),
+      );
     }
 
     setState(() {
@@ -100,6 +136,18 @@ class _HomePageState extends State<HomePage> {
       stepBars = stepData;
       waterBars = waterData;
     });
+  }
+
+  double _getMaxY(List<fl_chart.BarChartGroupData> data) {
+    double maxY = 0;
+    for (var group in data) {
+      for (var rod in group.barRods) {
+        if (rod.toY > maxY) {
+          maxY = rod.toY;
+        }
+      }
+    }
+    return maxY == 0 ? 10 : maxY * 1.2;
   }
 
   Widget _buildStreakBadge() {
@@ -117,19 +165,30 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(width: 8),
           Text(
             "$currentStreak-day Streak",
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildBarChart(String title, List<BarChartGroupData> data, String unit, double maxY) {
+  Widget _buildBarChart(
+    String title,
+    List<fl_chart.BarChartGroupData> data,
+    String unit,
+    double maxY,
+  ) {
     final now = DateTime.now();
     final labels = List.generate(7, (i) {
       final d = now.subtract(Duration(days: 6 - i));
       return DateFormat('d').format(d);
     });
+
+    final horizontalInterval = maxY > 0 ? maxY / 4 : 1.0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -142,45 +201,71 @@ class _HomePageState extends State<HomePage> {
         children: [
           Align(
             alignment: Alignment.centerLeft,
-            child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+            child: Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
           ),
           const SizedBox(height: 12),
           SizedBox(
             height: 150,
-            child: BarChart(
-              BarChartData(
+            child: fl_chart.BarChart(
+              fl_chart.BarChartData(
                 maxY: maxY,
-                titlesData: FlTitlesData(
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
+                minY: 0,
+                // clipData: ไม่ใช้ในเวอร์ชันนี้
+                titlesData: fl_chart.FlTitlesData(
+                  bottomTitles: fl_chart.AxisTitles(
+                    sideTitles: fl_chart.SideTitles(
                       showTitles: true,
                       getTitlesWidget: (value, _) {
                         final i = value.toInt();
                         return Text(
                           i >= 0 && i < labels.length ? labels[i] : '',
-                          style: const TextStyle(color: Colors.white, fontSize: 10),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                          ),
                         );
                       },
                     ),
                   ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
+                  leftTitles: fl_chart.AxisTitles(
+                    sideTitles: fl_chart.SideTitles(
                       showTitles: true,
                       reservedSize: 28,
-                      getTitlesWidget: (value, _) =>
-                          Text('${value.toInt()}', style: const TextStyle(color: Colors.white, fontSize: 10)),
+                      getTitlesWidget:
+                          (value, _) => Text(
+                            '${value.toInt()}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                            ),
+                          ),
                     ),
                   ),
-                  rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: fl_chart.AxisTitles(
+                    sideTitles: fl_chart.SideTitles(showTitles: false),
+                  ),
+                  topTitles: fl_chart.AxisTitles(
+                    sideTitles: fl_chart.SideTitles(showTitles: false),
+                  ),
                 ),
                 barGroups: data,
-                gridData: FlGridData(
+                gridData: fl_chart.FlGridData(
                   show: true,
-                  horizontalInterval: maxY / 4,
-                  getDrawingHorizontalLine: (value) => FlLine(color: Colors.white12, strokeWidth: 1),
+                  horizontalInterval: horizontalInterval,
+                  getDrawingHorizontalLine:
+                      (value) => fl_chart.FlLine(
+                        color: Colors.white12,
+                        strokeWidth: 1,
+                      ),
                 ),
-                borderData: FlBorderData(show: false),
+                borderData: fl_chart.FlBorderData(show: false),
               ),
             ),
           ),
@@ -199,12 +284,24 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Home", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Color(0xFF37421B))),
+              const Text(
+                "Home",
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF37421B),
+                ),
+              ),
               const SizedBox(height: 12),
               _buildStreakBadge(),
-              _buildBarChart("Workout Duration (min)", durationBars, "min", 100),
-              _buildBarChart("Step", stepBars, "steps", 10000),
-              _buildBarChart("Water", waterBars, "cups", 10),
+              _buildBarChart(
+                "Workout Duration (min)",
+                durationBars,
+                "min",
+                _getMaxY(durationBars),
+              ),
+              _buildBarChart("Step", stepBars, "steps", _getMaxY(stepBars)),
+              _buildBarChart("Water", waterBars, "cups", _getMaxY(waterBars)),
             ],
           ),
         ),

@@ -19,28 +19,14 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  int _selectedIndex = 0; // ตำแหน่งปัจจุบันของหน้า
+  int _selectedIndex = 0;
   bool _isLoggedIn = false;
   int? _userId;
-
-  final List<Widget> _pages = [
-    HomePage(),
-    CalendarPage(),
-    AddPage(),
-    WorkOut(),
-    ProfilePage(),
-  ];
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index; // เปลี่ยนหน้าเมื่อกดปุ่ม
-    });
-  }
 
   @override
   void initState() {
     super.initState();
-    _checkLoginStatus(); // ✅ เช็คว่าเคย login มั้ย
+    _checkLoginStatus();
   }
 
   Future<void> _checkLoginStatus() async {
@@ -56,34 +42,52 @@ class _MyAppState extends State<MyApp> {
 
   void _handleLoginSuccess(int userId) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('user_id', userId); // ✅ เก็บ user_id ไว้
+    await prefs.setInt('user_id', userId);
     setState(() {
       _isLoggedIn = true;
       _userId = userId;
     });
   }
 
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  Widget _getPage(int index) {
+    switch (index) {
+      case 0:
+        return const HomePage();
+      case 1:
+        return const CalendarPage();
+      case 2:
+        return const AddPage();
+      case 3:
+        return WorkOut();
+      case 4:
+        return ProfilePage();
+      default:
+        return const HomePage();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-  debugShowCheckedModeBanner: false,
-  routes: {
-    '/signup': (context) => SignUpPage(),
-  },
-  home: _isLoggedIn
-      ? Scaffold(
-          body: IndexedStack(
-            index: _selectedIndex,
-            children: _pages,
-          ),
-          bottomNavigationBar: BottomBar(
-            currentIndex: _selectedIndex,
-            onTap: _onItemTapped,
-          ),
-        )
-      : LoginPage(onLoginSuccess: _handleLoginSuccess),
-);
-
+      debugShowCheckedModeBanner: false,
+      routes: {
+        '/signup': (context) => const SignUpPage(),
+      },
+      home: _isLoggedIn
+          ? Scaffold(
+              body: _getPage(_selectedIndex),
+              bottomNavigationBar: BottomBar(
+                currentIndex: _selectedIndex,
+                onTap: _onItemTapped,
+              ),
+            )
+          : LoginPage(onLoginSuccess: _handleLoginSuccess),
+    );
   }
 }

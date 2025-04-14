@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.1.100:3000'; // ใช้กับ Android Emulator
+  static const String baseUrl = 'http://10.0.2.2:3000'; // ใช้กับ Android Emulator
   // ถ้าเป็นอุปกรณ์จริง: ใช้ IP เครื่องคอมแทน เช่น 192.168.1.5
 
   // 🔐 Login

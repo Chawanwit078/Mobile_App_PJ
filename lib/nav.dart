@@ -6,27 +6,27 @@ class BottomBar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
 
-  BottomBar({required this.currentIndex, required this.onTap});
+  const BottomBar({super.key, required this.currentIndex, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 20, horizontal: 16), // Add padding
-      decoration: BoxDecoration(
-        color: Color(0xFFA7AD8A), // Background color
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      decoration: const BoxDecoration(
+        color: Color(0xFFA7AD8A),
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
-        ), // Optional: Rounded corners
+        ),
       ),
       child: BottomNavigationBar(
         elevation: 0,
         currentIndex: currentIndex,
-        onTap: onTap,
+        onTap: (_) {}, // ปิด onTap ของ BottomNavigationBar
         selectedItemColor: Colors.black,
         unselectedItemColor: Color(0xFF354024),
         type: BottomNavigationBarType.fixed,
-        backgroundColor: Color(0xFFA7AD8A), // Remove default background
+        backgroundColor: const Color(0xFFA7AD8A),
         items: [
           _buildNavItem(IconlyLight.home, "Home", 0),
           _buildNavItem(IconlyLight.calendar, "Calendar", 1),
@@ -42,10 +42,10 @@ class BottomBar extends StatelessWidget {
     return BottomNavigationBarItem(
       label: label,
       icon: ZoomTapAnimation(
-        onTap: () => onTap(index), // เมื่อกดให้เปลี่ยนหน้า
+        onTap: () => onTap(index), // ✅ เรียกแม้กดซ้ำหน้าเดิม
         child: Icon(
           icon,
-          size: 28, // ปรับขนาดไอคอน
+          size: 28,
         ),
       ),
     );
