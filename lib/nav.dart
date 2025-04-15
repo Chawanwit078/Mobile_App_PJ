@@ -22,7 +22,7 @@ class BottomBar extends StatelessWidget {
       child: BottomNavigationBar(
         elevation: 0,
         currentIndex: currentIndex,
-        onTap: (_) {}, // ปิด onTap ของ BottomNavigationBar
+        onTap: onTap, // ปิด onTap ของ BottomNavigationBar
         selectedItemColor: Colors.black,
         unselectedItemColor: Color(0xFF354024),
         type: BottomNavigationBarType.fixed,
@@ -41,12 +41,9 @@ class BottomBar extends StatelessWidget {
   BottomNavigationBarItem _buildNavItem(IconData icon, String label, int index) {
     return BottomNavigationBarItem(
       label: label,
-      icon: ZoomTapAnimation(
-        onTap: () => onTap(index), // ✅ เรียกแม้กดซ้ำหน้าเดิม
-        child: Icon(
-          icon,
-          size: 28,
-        ),
+      icon: Icon(
+        icon,
+        size: 28,
       ),
     );
   }

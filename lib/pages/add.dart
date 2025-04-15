@@ -3,8 +3,9 @@ import 'package:iconly/iconly.dart';
 import 'package:intl/intl.dart';
 import 'package:pedometer/pedometer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:project_demo/db/database_helper.dart';
+import 'package:permission_handler/permission_handler.dart';
 
+import 'package:project_demo/db/database_helper.dart';
 import 'add_activity.dart';
 import 'edit_activity.dart';
 
@@ -17,7 +18,6 @@ class AddPage extends StatefulWidget {
 
 class _AddPageState extends State<AddPage> {
   int stepCount = 0;
-  int? initialSteps;
   int stepGoal = 10000;
   Stream<StepCount>? _stepCountStream;
 
@@ -45,43 +45,91 @@ class _AddPageState extends State<AddPage> {
   @override
   void initState() {
     super.initState();
-    _loadUserId();
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    await _requestPermission();
+    await _loadUserId();
+  }
+
+  Future<void> _requestPermission() async {
+    await Permission.activityRecognition.request();
   }
 
   Future<void> _loadUserId() async {
     final prefs = await SharedPreferences.getInstance();
     userId = prefs.getInt('userId') ?? 0;
+
+    prefs.remove('initial_steps');
+    prefs.remove('initial_steps_user_$userId');
+
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final summary = await DatabaseHelper.instance.getDailySummaryByDate(userId, today);
+
+    // ✅ แค่ครั้งแรกของวันนั้นเท่านั้นที่เซฟค่า sensor steps
+    if (summary['initial_sensor_steps'] == null) {
+      final sensorEvent = await Pedometer.stepCountStream.first;
+      await DatabaseHelper.instance.saveInitialSensorSteps(userId, sensorEvent.steps);
+    }
+
     _initPedometer();
     _loadSummary();
     _loadActivities();
   }
 
-  void _initPedometer() {
-    _stepCountStream = Pedometer.stepCountStream;
-    _stepCountStream!.listen((event) {
-      if (initialSteps == null) {
-        initialSteps = event.steps;
-      }
-      setState(() {
-        stepCount = event.steps - (initialSteps ?? 0);
+
+  void _initPedometer() async {
+    try {
+      _stepCountStream = Pedometer.stepCountStream;
+
+      final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final summary = await DatabaseHelper.instance.getDailySummaryByDate(userId, today);
+
+      int? initialSensorSteps = summary['initial_sensor_steps'];
+
+      _stepCountStream!.listen((event) async {
+        if (initialSensorSteps == null) {
+          initialSensorSteps = event.steps;
+          await DatabaseHelper.instance.saveInitialSensorSteps(userId, initialSensorSteps!);
+        }
+
+        final calculatedSteps = event.steps - initialSensorSteps!;
+        final cleanSteps = calculatedSteps < 0 ? 0 : calculatedSteps;
+
+        setState(() {
+          stepCount = cleanSteps;
+        });
+
+        await DatabaseHelper.instance.saveDailySummary(userId, stepCount, waterCups);
+      }).onError((error) {
+        debugPrint("Pedometer Error: $error");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("This device does not support step counting."),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
       });
-      _saveSummary();
-    }).onError((error) {
-      debugPrint("Pedometer Error: $error");
-    });
+    } catch (e) {
+      debugPrint("Pedometer Exception: $e");
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Step counter sensor not available on this device."),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      });
+    }
   }
 
   Future<void> _loadSummary() async {
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final summary = await DatabaseHelper.instance.getDailySummaryByDate(userId, today);
     setState(() {
-      stepCount = summary['steps'] ?? 0;
       waterCups = summary['water'] ?? 0;
     });
-  }
-
-  Future<void> _saveSummary() async {
-    await DatabaseHelper.instance.saveDailySummary(userId, stepCount, waterCups);
   }
 
   Future<void> _loadActivities() async {
@@ -135,7 +183,7 @@ class _AddPageState extends State<AddPage> {
                 await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => EditActivityPage(activity: activity, userId: userId), // ✅ ส่ง userId
+                    builder: (_) => EditActivityPage(activity: activity, userId: userId),
                   ),
                 );
                 _loadActivities();
@@ -147,10 +195,7 @@ class _AddPageState extends State<AddPage> {
                     Container(
                       decoration: BoxDecoration(color: olive, borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.all(12),
-                      child: Icon(
-                        sportIcons[activity['name']] ?? Icons.fitness_center,
-                        color: Colors.white,
-                      ),
+                      child: Icon(sportIcons[activity['name']] ?? Icons.fitness_center, color: Colors.white),
                     ),
                     const SizedBox(width: 12),
                     Column(
@@ -170,7 +215,7 @@ class _AddPageState extends State<AddPage> {
             onTap: () async {
               await Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => AddActivityPage(userId: userId)), // ✅ ส่ง userId
+                MaterialPageRoute(builder: (_) => AddActivityPage(userId: userId)),
               );
               _loadActivities();
             },
@@ -189,7 +234,6 @@ class _AddPageState extends State<AddPage> {
   }
 
   Widget _buildStepCard() {
-    double percent = stepCount / stepGoal;
     return _buildCircularCard("Step", stepCount, stepGoal, yellow, Icons.directions_walk);
   }
 
@@ -247,7 +291,7 @@ class _AddPageState extends State<AddPage> {
                       setState(() {
                         if (waterCups > 0) waterCups--;
                       });
-                      _saveSummary();
+                      DatabaseHelper.instance.saveDailySummary(userId, stepCount, waterCups);
                     },
                   ),
                   IconButton(
@@ -256,7 +300,7 @@ class _AddPageState extends State<AddPage> {
                       setState(() {
                         if (waterCups < waterGoal) waterCups++;
                       });
-                      _saveSummary();
+                      DatabaseHelper.instance.saveDailySummary(userId, stepCount, waterCups);
                     },
                   ),
                 ],
