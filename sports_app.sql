@@ -14,9 +14,6 @@ CREATE TABLE users (
   weight FLOAT,
   height FLOAT
 );
-INSERT INTO users (username, password) VALUES 
-('AA', '1234'),
-('BB', '1234');
 
 
 
@@ -347,9 +344,6 @@ INSERT INTO sport_benefits (sport_id, benefit) VALUES
 
 
 
-
-
-
 -- QUIZ PART
 CREATE TABLE user_quiz_results (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -362,6 +356,3 @@ CREATE TABLE user_quiz_results (
 );
 ALTER TABLE user_quiz_results ADD UNIQUE(user_id, sport_id);
 
-INSERT INTO user_quiz_results (user_id, selected_type, selected_style,sport_id) VALUES 
-(1,"Indoor","Solo sports",1),
-(1,"Indoor","Solo sports",2);

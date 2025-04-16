@@ -38,13 +38,11 @@ class BottomBar extends StatelessWidget {
     );
   }
 
-  BottomNavigationBarItem _buildNavItem(IconData icon, String label, int index) {
-    return BottomNavigationBarItem(
-      label: label,
-      icon: Icon(
-        icon,
-        size: 28,
-      ),
-    );
+  BottomNavigationBarItem _buildNavItem(
+    IconData icon,
+    String label,
+    int index,
+  ) {
+    return BottomNavigationBarItem(label: label, icon: Icon(icon, size: 28));
   }
 }

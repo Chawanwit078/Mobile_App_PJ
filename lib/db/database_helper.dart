@@ -20,7 +20,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 2, // 🆙 อัปเดตเป็น version 2
+      version: 1,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE IF NOT EXISTS activities (
@@ -38,17 +38,9 @@ class DatabaseHelper {
             date TEXT,
             steps INTEGER,
             water INTEGER,
-            initial_sensor_steps INTEGER,
             PRIMARY KEY (user_id, date)
           );
         ''');
-      },
-      onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 2) {
-          await db.execute('''
-            ALTER TABLE daily_summary ADD COLUMN initial_sensor_steps INTEGER;
-          ''');
-        }
       },
     );
   }
@@ -100,14 +92,10 @@ class DatabaseHelper {
     );
   }
 
-  // 🔹 Save or update daily summary (steps + water) - ไม่ลบ initial_sensor_steps
+  // 🔹 Save or update daily summary (steps + water)
   Future<void> saveDailySummary(int userId, int steps, int water) async {
     final db = await database;
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-
-    final existing = await getDailySummaryByDate(userId, today);
-    final initialSensor = existing['initial_sensor_steps'];
-
     await db.insert(
       'daily_summary',
       {
@@ -115,7 +103,6 @@ class DatabaseHelper {
         'date': today,
         'steps': steps,
         'water': water,
-        'initial_sensor_steps': initialSensor
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
@@ -129,24 +116,10 @@ class DatabaseHelper {
       where: 'user_id = ? AND date = ?',
       whereArgs: [userId, date],
     );
-    return result.isNotEmpty
-        ? result.first
-        : {'steps': 0, 'water': 0, 'initial_sensor_steps': null};
+    return result.isNotEmpty ? result.first : {'steps': 0, 'water': 0};
   }
 
-  // 🔹 Save only initial sensor step value
-  Future<void> saveInitialSensorSteps(int userId, int sensorSteps) async {
-    final db = await database;
-    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-
-    await db.rawUpdate('''
-      UPDATE daily_summary
-      SET initial_sensor_steps = ?
-      WHERE user_id = ? AND date = ?
-    ''', [sensorSteps, userId, today]);
-  }
-
-  // 🔹 Delete all user data
+  // 🔹 Delete all user data (if needed)
   Future<void> deleteUserData(int userId) async {
     final db = await database;
     await db.delete('activities', where: 'user_id = ?', whereArgs: [userId]);
